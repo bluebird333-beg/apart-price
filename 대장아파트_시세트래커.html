@@ -46,8 +46,18 @@
   .logo { display: flex; align-items: center; gap: 10px; }
   .logo-icon { font-size: 22px; }
   header h1 { font-size: 16px; font-weight: 700; color: var(--text); }
-  .header-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-dim); }
+  .header-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-dim); align-items: center; }
   .header-stats span { color: var(--accent); font-weight: 600; }
+  .btn-header {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); transition: all 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .btn-export { background: var(--surface2); color: var(--text-dim); }
+  .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-import { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-import:hover { background: #1d4ed8; }
+  #importFileInput { display: none; }
 
   .container {
     display: grid;
@@ -247,6 +257,9 @@
     <div><span id="totalCount">36</span>개 아파트</div>
     <div><span id="regionCount">5</span>개 권역</div>
     <div>DATA <span>2021~2023</span></div>
+    <button class="btn-header btn-export" onclick="exportData()">📤 내보내기</button>
+    <button class="btn-header btn-import" onclick="document.getElementById('importFileInput').click()">📥 가져오기</button>
+    <input type="file" id="importFileInput" accept=".json" onchange="importData(event)">
   </div>
 </header>
 
@@ -612,6 +625,54 @@ function renderRanking() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== 내보내기 / 가져오기 =====
+function exportData() {
+  const d = loadUserData();
+  if (!Object.keys(d).length) {
+    showToast('⚠️ 저장된 입력 데이터가 없어요');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `아파트시세_입력데이터_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 내보내기 완료!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      // 기존 데이터와 병합 (같은 날짜면 덮어쓰기)
+      const existing = loadUserData();
+      let addedCount = 0;
+      Object.entries(imported).forEach(([aptName, entries]) => {
+        if (!existing[aptName]) existing[aptName] = {};
+        Object.entries(entries).forEach(([date, val]) => {
+          existing[aptName][date] = val;
+          addedCount++;
+        });
+      });
+      saveUserData(existing);
+      showToast(`📥 가져오기 완료! ${addedCount}개 항목 반영`);
+      // 현재 보고 있는 아파트 새로고침
+      if (currentApt) selectApt(currentApt);
+    } catch(err) {
+      showToast('❌ 파일 형식이 올바르지 않아요');
+    }
+  };
+  reader.readAsText(file);
+  // input 초기화 (같은 파일 재선택 가능하도록)
+  event.target.value = '';
 }
 
 // ===== Init =====
