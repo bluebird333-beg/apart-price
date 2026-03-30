@@ -38,26 +38,35 @@
     position: sticky; top: 0; z-index: 100;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
+    padding: 0 16px;
+    height: 52px;
     display: flex; align-items: center; justify-content: space-between;
     box-shadow: var(--shadow);
+    gap: 8px;
   }
-  .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-icon { font-size: 22px; }
-  header h1 { font-size: 16px; font-weight: 700; color: var(--text); }
-  .header-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-dim); align-items: center; }
+  .logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .logo-icon { font-size: 20px; }
+  header h1 { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header-stats { display: flex; gap: 12px; font-size: 11px; color: var(--text-dim); align-items: center; }
   .header-stats span { color: var(--accent); font-weight: 600; }
+  .header-stat-item { white-space: nowrap; }
+  .header-btns { display: flex; gap: 6px; flex-shrink: 0; }
   .btn-header {
-    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
     cursor: pointer; border: 1px solid var(--border); transition: all 0.15s;
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
   }
   .btn-export { background: var(--surface2); color: var(--text-dim); }
   .btn-export:hover { border-color: var(--accent); color: var(--accent); }
   .btn-import { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-import:hover { background: #1d4ed8; }
   #importFileInput { display: none; }
+  @media (max-width: 640px) {
+    .header-stats { display: none; }
+    header h1 { font-size: 13px; }
+    .btn-header { padding: 5px 8px; font-size: 11px; }
+  }
 
   .container {
     display: grid;
@@ -253,13 +262,17 @@
     <div class="logo-icon">🏢</div>
     <h1>대장아파트 시세 트래커</h1>
   </div>
-  <div class="header-stats">
-    <div><span id="totalCount">36</span>개 아파트</div>
-    <div><span id="regionCount">5</span>개 권역</div>
-    <div>DATA <span>2021~2023</span></div>
-    <button class="btn-header btn-export" onclick="exportData()">📤 내보내기</button>
-    <button class="btn-header btn-import" onclick="document.getElementById('importFileInput').click()">📥 가져오기</button>
-    <input type="file" id="importFileInput" accept=".json" onchange="importData(event)">
+  <div class="header-right">
+    <div class="header-stats">
+      <div class="header-stat-item"><span id="totalCount">36</span>개 아파트</div>
+      <div class="header-stat-item"><span id="regionCount">5</span>개 권역</div>
+      <div class="header-stat-item">DATA <span>2021~2023</span></div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-header btn-export" onclick="exportData()">📤 내보내기</button>
+      <button class="btn-header btn-import" onclick="document.getElementById('importFileInput').click()">📥 가져오기</button>
+      <input type="file" id="importFileInput" accept=".json" onchange="importData(event)">
+    </div>
   </div>
 </header>
 
