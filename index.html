@@ -539,7 +539,38 @@ async function saveEntry() {
   showToast('✅ ' + year + '년 ' + date + ' 저장 완료!');
   selectApt(currentApt);
 }
-async function clearMyData() {
+async function editEntry(aptName, dateKey) {
+  const d = _cachedUserData;
+  const entry = d[aptName] && d[aptName][dateKey];
+  if (!entry) return;
+
+  // 모달 열고 기존 값 채우기
+  currentApt = DATA.find(a => a.name === aptName);
+  if (!currentApt) return;
+
+  // 연도와 월-주차 분리 (예: "2026년_3월-01" → "2026", "3월-01")
+  const [yearPart, datePart] = dateKey.split('년_');
+  document.getElementById('modalAptName').textContent = aptName;
+  document.getElementById('inputYear').value = yearPart;
+  document.getElementById('inputDate').value = datePart;
+  document.getElementById('inputMaemae').value = entry.maemae || '';
+  document.getElementById('inputJeonse').value = entry.jeonse || '';
+  document.getElementById('inputMemo').value = entry.memo || '';
+  document.getElementById('updateModal').classList.add('open');
+}
+
+async function deleteEntry(aptName, dateKey) {
+  if (!confirm(`${fmtKey(dateKey)} 데이터를 삭제할까요?`)) return;
+  const d = _cachedUserData;
+  if (d[aptName] && d[aptName][dateKey]) {
+    delete d[aptName][dateKey];
+    if (!Object.keys(d[aptName]).length) delete d[aptName];
+    showToast('💾 삭제 중...');
+    await saveUserData(d);
+    showToast('🗑️ 삭제 완료!');
+    selectApt(DATA.find(a => a.name === aptName) || currentApt);
+  }
+}
   if (!currentApt || !confirm(currentApt.name + '\n내 입력 데이터를 모두 삭제할까요?')) return;
   const d = _cachedUserData;
   delete d[currentApt.name];
@@ -701,7 +732,7 @@ function renderTable(apt) {
 
   const wrap = document.getElementById('userNoticeWrap');
   wrap.innerHTML = userDates.length
-    ? `<div class="user-notice">🟣 보라색 행 = 내가 입력한 데이터 <button class="clear-link" onclick="clearMyData()">초기화</button></div>`
+    ? `<div class="user-notice">🟣 보라색 행 = 내가 입력한 데이터 <button class="clear-link" onclick="clearMyData()">전체초기화</button></div>`
     : '';
 
   document.getElementById('tableBody').innerHTML = sorted.map(date => {
@@ -709,7 +740,9 @@ function renderTable(apt) {
     const gap = m && j ? m-j : null;
     const rate = m && j ? (j/m*100).toFixed(1) : null;
     const isUser = userDates.includes(date);
-    return `<tr${isUser?' class="user-row"':''}><td class="td-date">${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
+    const editBtn = isUser ? `<button onclick="editEntry('${apt.name.replace(/'/g,'\\'')}','${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px;">✏️수정</button>` : '';
+    const delBtn = isUser ? `<button onclick="deleteEntry('${apt.name.replace(/'/g,'\\'')}','${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:2px;">🗑️삭제</button>` : '';
+    return `<tr${isUser?' class="user-row"':''}><td class="td-date">${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}${editBtn}${delBtn}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
   }).join('');
 }
 
