@@ -790,9 +790,13 @@ function renderTable(apt) {
   const sorted = sortDates([...allDates]).reverse();
 
   const wrap = document.getElementById('userNoticeWrap');
-  wrap.innerHTML = userDates.length
-    ? `<div class="user-notice">🟣 보라색 행 = 내가 입력한 데이터 <button class="clear-link" onclick="clearMyData()">전체초기화</button></div>`
-    : '';
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+      ${userDates.length ? `<div class="user-notice" style="margin:0;">🟣 보라색 행 = 내가 입력한 데이터 <button class="clear-link" onclick="clearMyData()">전체초기화</button></div>` : ''}
+      <button id="toggleSelectBtn" onclick="toggleSelectMode()" style="background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;">☑️ 선택삭제 모드</button>
+      <button id="bulkDeleteBtn" onclick="bulkDelete()" style="display:none;background:var(--red);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;">🗑️ 선택 삭제 (<span id="selectedCount">0</span>개)</button>
+      <button id="cancelSelectBtn" onclick="cancelSelectMode()" style="display:none;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;">✖ 취소</button>
+    </div>`;
 
   document.getElementById('tableBody').innerHTML = sorted.map(date => {
     const m = apt['매매'][date], j = apt['전세'][date];
@@ -802,9 +806,50 @@ function renderTable(apt) {
     const btnStyle = 'border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;';
     const editBtn = `<button data-apt="${encodeURIComponent(apt.name)}" data-date="${date}" onclick="handleEdit(this)" style="background:none;border:1px solid var(--accent);color:var(--accent);${btnStyle}margin-right:2px;">✏️수정</button>`;
     const delBtn = `<button data-apt="${encodeURIComponent(apt.name)}" data-date="${date}" onclick="handleDelete(this)" style="background:none;border:1px solid var(--red);color:var(--red);${btnStyle}">🗑️삭제</button>`;
-    const btnRow = `<div style="margin-top:3px;">${editBtn}${delBtn}</div>`;
-    return `<tr${isUser?' class="user-row"':''}><td class="td-date"><div>${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}</div>${btnRow}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
+    const btnRow = `<div class="row-btns" style="margin-top:3px;">${editBtn}${delBtn}</div>`;
+    const chk = `<input type="checkbox" class="row-chk" data-date="${date}" onclick="updateSelectedCount()" style="display:none;margin-right:6px;cursor:pointer;width:15px;height:15px;">`;
+    return `<tr${isUser?' class="user-row"':''} data-date="${date}"><td class="td-date"><div style="display:flex;align-items:center;">${chk}<div>${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}</div></div>${btnRow}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
   }).join('');
+}
+
+let _selectMode = false;
+function toggleSelectMode() {
+  _selectMode = true;
+  document.querySelectorAll('.row-chk').forEach(c => c.style.display = 'inline-block');
+  document.querySelectorAll('.row-btns').forEach(b => b.style.display = 'none');
+  document.getElementById('toggleSelectBtn').style.display = 'none';
+  document.getElementById('bulkDeleteBtn').style.display = 'inline-block';
+  document.getElementById('cancelSelectBtn').style.display = 'inline-block';
+  updateSelectedCount();
+}
+function cancelSelectMode() {
+  _selectMode = false;
+  document.querySelectorAll('.row-chk').forEach(c => { c.checked = false; c.style.display = 'none'; });
+  document.querySelectorAll('.row-btns').forEach(b => b.style.display = 'block');
+  document.getElementById('toggleSelectBtn').style.display = 'inline-block';
+  document.getElementById('bulkDeleteBtn').style.display = 'none';
+  document.getElementById('cancelSelectBtn').style.display = 'none';
+}
+function updateSelectedCount() {
+  const cnt = document.querySelectorAll('.row-chk:checked').length;
+  const el = document.getElementById('selectedCount');
+  if (el) el.textContent = cnt;
+}
+async function bulkDelete() {
+  const checked = [...document.querySelectorAll('.row-chk:checked')];
+  if (!checked.length) { showToast('⚠️ 삭제할 항목을 선택해주세요'); return; }
+  if (!confirm(`선택한 ${checked.length}개 데이터를 삭제할까요?`)) return;
+  const d = _cachedUserData;
+  const aptName = currentApt.name;
+  if (!d[aptName]) d[aptName] = {};
+  checked.forEach(chk => {
+    const dateKey = chk.dataset.date;
+    d[aptName][dateKey] = { maemae: null, jeonse: null, deleted: true, at: new Date().toLocaleDateString('ko-KR') };
+  });
+  showToast('💾 삭제 중...');
+  await saveUserData(d);
+  showToast(`🗑️ ${checked.length}개 삭제 완료!`);
+  selectApt(currentApt);
 }
 
 // ===== 랭킹 =====
