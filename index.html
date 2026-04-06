@@ -66,6 +66,7 @@
     .header-stats { display: none; }
     header h1 { font-size: 13px; }
     .btn-header { padding: 5px 8px; font-size: 11px; }
+    .btn-label { display: none; }
   }
 
   .container {
@@ -269,9 +270,9 @@
       <div class="header-stat-item">DATA <span>2021~2023</span></div>
     </div>
     <div class="header-btns">
-      <button class="btn-header btn-export" onclick="exportData()">📤 내보내기</button>
-      <button class="btn-header btn-import" onclick="document.getElementById('importFileInput').click()">📥 가져오기</button>
-      <button class="btn-header" style="background:#16a34a;color:#fff;border-color:#16a34a;" onclick="openAddAptModal()">🏢 아파트 추가</button>
+      <button class="btn-header btn-export" onclick="exportData()">📤 <span class="btn-label">내보내기</span></button>
+      <button class="btn-header btn-import" onclick="document.getElementById('importFileInput').click()">📥 <span class="btn-label">가져오기</span></button>
+      <button class="btn-header" style="background:#16a34a;color:#fff;border-color:#16a34a;" onclick="openAddAptModal()">🏢 <span class="btn-label">아파트 추가</span></button>
       <input type="file" id="importFileInput" accept=".json" onchange="importData(event)">
     </div>
   </div>
