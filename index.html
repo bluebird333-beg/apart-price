@@ -177,7 +177,7 @@
   td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
-  .td-date { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); }
+  .td-date { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-dim); white-space: nowrap; }
   .td-매매 { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--accent); }
   .td-전세 { font-family: 'Space Mono', monospace; color: var(--accent2); }
   .td-gap { font-family: 'Space Mono', monospace; color: var(--text-dim); }
@@ -750,9 +750,10 @@ function renderTable(apt) {
     const rate = m && j ? (j/m*100).toFixed(1) : null;
     const isUser = userDates.includes(date);
     const idx = DATA.indexOf(apt);
-    const editBtn = `<button onclick="editEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px;">✏️</button>`;
-    const delBtn = isUser ? `<button onclick="deleteEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:2px;">🗑️</button>` : '';
-    return `<tr${isUser?' class="user-row"':''}><td class="td-date">${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}${editBtn}${delBtn}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
+    const editBtn = `<button onclick="editEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;margin-right:2px;">✏️수정</button>`;
+    const delBtn = `<button onclick="deleteEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;">🗑️삭제</button>`;
+    const btnRow = `<div style="margin-top:3px;">${editBtn}${delBtn}</div>`;
+    return `<tr${isUser?' class="user-row"':''}><td class="td-date"><div>${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}</div>${btnRow}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
   }).join('');
 }
 
