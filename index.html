@@ -440,6 +440,44 @@
     </div>
   </div>
 </div>
+<!-- 아파트 수정 모달 -->
+<div class="modal-overlay" id="editAptModal">
+  <div class="modal-box">
+    <div class="modal-title">🏢 아파트 정보 수정</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>🗺️ 권역</label>
+        <select id="editAptRegion">
+          <option value="수도권">수도권</option>
+          <option value="경남권">경남권</option>
+          <option value="경북권">경북권</option>
+          <option value="기타권">기타권</option>
+          <option value="전라권">전라권</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>📍 지역</label>
+        <input type="text" id="editAptArea" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>🏠 아파트명</label>
+        <input type="text" id="editAptName" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>📐 평형</label>
+        <input type="text" id="editAptSize" />
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditAptModal()">취소</button>
+      <button class="btn-save" style="background:#f59e0b;" onclick="saveEditApt()">💾 수정 저장</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -688,7 +726,9 @@ function selectApt(apt) {
     <span class="tag tag-region">${a.region}</span>
     <span class="tag tag-area">${a.area}</span>
     <span class="tag tag-size">${a.size}</span>
-    <button class="btn-update" onclick="openUpdateModal()">✏️ 실거래가 추가</button>`;
+    <button class="btn-update" onclick="openUpdateModal()">✏️ 실거래가 추가</button>
+    <button class="btn-update" onclick="openEditAptModal()" style="background:#fff8e1;border-color:#f59e0b;color:#f59e0b;">🏢 아파트 수정</button>
+    <button class="btn-update" onclick="deleteApt()" style="background:#fff0f0;border-color:var(--red);color:var(--red);">🗑️ 아파트 삭제</button>`;
 
   const lm = getLatestPrice(a, '매매'), lj = getLatestPrice(a, '전세');
   const gap = lm && lj ? lm - lj : null;
@@ -832,6 +872,79 @@ async function importData(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ===== 아파트 수정/삭제 =====
+function openEditAptModal() {
+  if (!currentApt) return;
+  document.getElementById('editAptRegion').value = currentApt.region;
+  document.getElementById('editAptArea').value = currentApt.area;
+  document.getElementById('editAptName').value = currentApt.name;
+  document.getElementById('editAptSize').value = currentApt.size;
+  document.getElementById('editAptModal').classList.add('open');
+}
+function closeEditAptModal() {
+  document.getElementById('editAptModal').classList.remove('open');
+}
+function saveEditApt() {
+  if (!currentApt) return;
+  const newRegion = document.getElementById('editAptRegion').value;
+  const newArea = document.getElementById('editAptArea').value.trim();
+  const newName = document.getElementById('editAptName').value.trim();
+  const newSize = document.getElementById('editAptSize').value.trim();
+  if (!newName) { showToast('⚠️ 아파트명을 입력해주세요'); return; }
+
+  // 커스텀 아파트인 경우 localStorage도 업데이트
+  const customs = loadCustomApts();
+  const ci = customs.findIndex(a => a.name === currentApt.name);
+
+  // DATA에서 찾아서 수정
+  const di = DATA.findIndex(a => a.name === currentApt.name);
+  if (di !== -1) {
+    DATA[di].region = newRegion;
+    DATA[di].area = newArea;
+    DATA[di].name = newName;
+    DATA[di].size = newSize;
+  }
+
+  if (ci !== -1) {
+    customs[ci].region = newRegion;
+    customs[ci].area = newArea;
+    customs[ci].name = newName;
+    customs[ci].size = newSize;
+    saveCustomApts(customs);
+  }
+
+  closeEditAptModal();
+  showToast('✅ 아파트 정보 수정 완료!');
+  currentApt = DATA[di];
+  renderAptList();
+  renderRanking();
+  selectApt(currentApt);
+}
+
+function deleteApt() {
+  if (!currentApt) return;
+  if (!confirm(`"${currentApt.name}"\n이 아파트를 목록에서 삭제할까요?`)) return;
+
+  // 커스텀 아파트면 localStorage에서도 삭제
+  const customs = loadCustomApts();
+  const ci = customs.findIndex(a => a.name === currentApt.name);
+  if (ci !== -1) {
+    customs.splice(ci, 1);
+    saveCustomApts(customs);
+  }
+
+  // DATA에서 삭제
+  const di = DATA.findIndex(a => a.name === currentApt.name);
+  if (di !== -1) DATA.splice(di, 1);
+
+  currentApt = null;
+  document.getElementById('detailView').style.display = 'none';
+  document.getElementById('rankingView').style.display = 'block';
+  showToast('🗑️ 아파트 삭제 완료!');
+  renderAptList();
+  renderRanking();
 }
 
 // ===== 아파트 추가 =====
