@@ -545,6 +545,16 @@ async function saveEntry() {
   showToast('✅ ' + year + '년 ' + date + ' 저장 완료!');
   selectApt(currentApt);
 }
+function handleEdit(btn) {
+  const aptName = decodeURIComponent(btn.dataset.apt);
+  const dateKey = btn.dataset.date;
+  editEntry(aptName, dateKey);
+}
+function handleDelete(btn) {
+  const aptName = decodeURIComponent(btn.dataset.apt);
+  const dateKey = btn.dataset.date;
+  deleteEntry(aptName, dateKey);
+}
 function editEntryByIdx(idx, dateKey) { editEntry(DATA[idx].name, dateKey); }
 function deleteEntryByIdx(idx, dateKey) { deleteEntry(DATA[idx].name, dateKey); }
 async function editEntry(aptName, dateKey) {
@@ -749,9 +759,9 @@ function renderTable(apt) {
     const gap = m && j ? m-j : null;
     const rate = m && j ? (j/m*100).toFixed(1) : null;
     const isUser = userDates.includes(date);
-    const idx = DATA.indexOf(apt);
-    const editBtn = `<button onclick="editEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;margin-right:2px;">✏️수정</button>`;
-    const delBtn = `<button onclick="deleteEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;">🗑️삭제</button>`;
+    const btnStyle = 'border-radius:3px;padding:0 5px;font-size:10px;cursor:pointer;';
+    const editBtn = `<button data-apt="${encodeURIComponent(apt.name)}" data-date="${date}" onclick="handleEdit(this)" style="background:none;border:1px solid var(--accent);color:var(--accent);${btnStyle}margin-right:2px;">✏️수정</button>`;
+    const delBtn = `<button data-apt="${encodeURIComponent(apt.name)}" data-date="${date}" onclick="handleDelete(this)" style="background:none;border:1px solid var(--red);color:var(--red);${btnStyle}">🗑️삭제</button>`;
     const btnRow = `<div style="margin-top:3px;">${editBtn}${delBtn}</div>`;
     return `<tr${isUser?' class="user-row"':''}><td class="td-date"><div>${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}</div>${btnRow}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
   }).join('');
