@@ -539,6 +539,8 @@ async function saveEntry() {
   showToast('✅ ' + year + '년 ' + date + ' 저장 완료!');
   selectApt(currentApt);
 }
+function editEntryByIdx(idx, dateKey) { editEntry(DATA[idx].name, dateKey); }
+function deleteEntryByIdx(idx, dateKey) { deleteEntry(DATA[idx].name, dateKey); }
 async function editEntry(aptName, dateKey) {
   const d = _cachedUserData;
   const entry = d[aptName] && d[aptName][dateKey];
@@ -571,6 +573,7 @@ async function deleteEntry(aptName, dateKey) {
     selectApt(DATA.find(a => a.name === aptName) || currentApt);
   }
 }
+async function clearMyData() {
   if (!currentApt || !confirm(currentApt.name + '\n내 입력 데이터를 모두 삭제할까요?')) return;
   const d = _cachedUserData;
   delete d[currentApt.name];
@@ -740,8 +743,9 @@ function renderTable(apt) {
     const gap = m && j ? m-j : null;
     const rate = m && j ? (j/m*100).toFixed(1) : null;
     const isUser = userDates.includes(date);
-    const editBtn = isUser ? `<button onclick="editEntry('${apt.name.replace(/'/g,'\\'')}','${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px;">✏️수정</button>` : '';
-    const delBtn = isUser ? `<button onclick="deleteEntry('${apt.name.replace(/'/g,'\\'')}','${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:2px;">🗑️삭제</button>` : '';
+    const idx = DATA.indexOf(apt);
+    const editBtn = isUser ? `<button onclick="editEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px;">✏️수정</button>` : '';
+    const delBtn = isUser ? `<button onclick="deleteEntryByIdx(${idx},'${date}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:2px;">🗑️삭제</button>` : '';
     return `<tr${isUser?' class="user-row"':''}><td class="td-date">${fmtKey(date)}${isUser?'<span class="user-badge">✏️내입력</span>':''}${editBtn}${delBtn}</td><td class="td-매매">${fmt(m)}</td><td class="td-전세">${fmt(j)}</td><td class="td-gap">${fmt(gap)}</td><td style="color:${rate>60?'var(--green)':rate>40?'var(--text-dim)':'var(--red)'}">${rate?rate+'%':'-'}</td></tr>`;
   }).join('');
 }
