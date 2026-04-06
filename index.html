@@ -888,13 +888,20 @@ document.getElementById('addAptCancelBtn').addEventListener('click', closeAddApt
 document.getElementById('addAptSaveBtn').addEventListener('click', saveNewApt);
 document.getElementById('addAptModal').addEventListener('click', e => { if (e.target === document.getElementById('addAptModal')) closeAddAptModal(); });
 
-// 앱 시작: 구글 시트에서 데이터 로드 후 렌더링
+// 앱 시작: 일단 localStorage로 즉시 렌더링 후 구글 시트 데이터로 업데이트
 (async () => {
-  showToast('🔄 데이터 불러오는 중...');
-  _cachedUserData = await loadUserData();
+  // 1단계: localStorage 데이터로 즉시 화면 표시
+  try { _cachedUserData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { _cachedUserData = {}; }
   mergeCustomApts();
   renderAptList();
   renderRanking();
+
+  // 2단계: 구글 시트에서 최신 데이터 로드 후 업데이트
+  showToast('🔄 구글 시트 동기화 중...');
+  _cachedUserData = await loadUserData();
+  renderAptList();
+  renderRanking();
+  if (currentApt) selectApt(currentApt);
   showToast(_gsLoaded ? '✅ 구글 시트 연동 완료!' : '⚠️ 오프라인 모드 (로컬 데이터)');
 })();
 </script>
