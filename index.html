@@ -992,11 +992,20 @@ function deleteApt() {
 const APT_ADD_KEY = 'apt_tracker_custom_v1';
 
 function loadCustomApts() {
+  // 구글 시트 캐시에서 먼저 읽고, 없으면 localStorage 백업 사용
+  if (_cachedUserData && _cachedUserData.__customApts) {
+    return _cachedUserData.__customApts;
+  }
   try { return JSON.parse(localStorage.getItem(APT_ADD_KEY) || '[]'); }
   catch(e) { return []; }
 }
-function saveCustomApts(arr) {
+
+async function saveCustomApts(arr) {
+  // localStorage 백업
   localStorage.setItem(APT_ADD_KEY, JSON.stringify(arr));
+  // 구글 시트에도 저장 (실거래가 데이터와 함께)
+  _cachedUserData.__customApts = arr;
+  await saveUserData(_cachedUserData);
 }
 
 // 앱 시작 시 커스텀 아파트를 DATA에 병합
@@ -1074,6 +1083,13 @@ document.getElementById('addAptModal').addEventListener('click', e => { if (e.ta
   // 2단계: 구글 시트에서 최신 데이터 로드 후 업데이트
   showToast('🔄 구글 시트 동기화 중...');
   _cachedUserData = await loadUserData();
+  // localStorage 커스텀 아파트도 구글 시트로 마이그레이션 (최초 1회)
+  const localCustoms = JSON.parse(localStorage.getItem(APT_ADD_KEY) || '[]');
+  if (localCustoms.length > 0 && !_cachedUserData.__customApts) {
+    _cachedUserData.__customApts = localCustoms;
+    await saveUserData(_cachedUserData);
+  }
+  mergeCustomApts();
   renderAptList();
   renderRanking();
   if (currentApt) selectApt(currentApt);
